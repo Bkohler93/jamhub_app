@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jamhubapp/auth/auth.dart';
 import 'package:jamhubapp/auth/service.dart';
 import 'package:jamhubapp/models/auth.dart';
-import 'package:jamhubapp/data/service.dart';
+import 'package:jamhubapp/data/jamhub.dart';
 import 'package:jamhubapp/data/providers/subscriptions.dart';
 
 class CreateRoomPage extends StatelessWidget {
@@ -32,10 +32,21 @@ class CreateRoomFormState extends ConsumerState<CreateRoomForm> {
   AuthUser? user;
 
   void Function() pressCreateHandler(AuthUser u) {
-    return () {
-      final room = ref
-          .read(jamhubServiceProvider)
-          .createRoom(roomNameController.text, u);
+    return () async {
+      try {
+        await ref
+            .read(jamhubServiceProvider)
+            .createRoom(roomNameController.text, u);
+      } catch (e) {
+        if (e is AccessTokenExpiredException) {
+          final updatedUser = await ref.read(authServiceProvider).refresh(u);
+          ref.read(authNotifierProvider.notifier).updateAuthUser(updatedUser);
+
+          await ref
+              .read(jamhubServiceProvider)
+              .createRoom(roomNameController.text, u);
+        }
+      }
 
       ref.invalidate(userSubscriptionsProvider);
       ref.invalidate(topSubscribedRoomsProvider);

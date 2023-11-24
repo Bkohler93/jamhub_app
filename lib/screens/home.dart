@@ -104,7 +104,7 @@ class HomePageState extends ConsumerState {
   void Function() handleAddRoom(BuildContext context) {
     return () {
       Navigator.of(context).push(MaterialPageRoute(
-          builder: (BuildContext context) => CreateRoomPage()));
+          builder: (BuildContext context) => const CreateRoomPage()));
     };
   }
 
@@ -138,12 +138,12 @@ class HomePageState extends ConsumerState {
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
                     builder: (BuildContext context) {
-                      return LoginPage();
+                      return const LoginPage();
                     },
                   ),
                 );
               },
-              child: Text("Logout"))
+              child: const Text("Logout"))
         ],
         title: const Text("JamHub"),
       ),

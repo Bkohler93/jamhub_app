@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jamhubapp/data/service.dart';
+import 'package:jamhubapp/data/jamhub.dart';
 import 'package:jamhubapp/models/post.dart';
 import 'package:uuid/uuid.dart';
 

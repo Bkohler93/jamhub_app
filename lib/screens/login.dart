@@ -1,10 +1,6 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
 import 'package:jamhubapp/auth/auth.dart';
-import 'package:jamhubapp/models/user.dart';
 import 'package:jamhubapp/screens/home.dart';
 import 'package:jamhubapp/screens/signup.dart';
 

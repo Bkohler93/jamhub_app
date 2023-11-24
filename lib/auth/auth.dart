@@ -2,6 +2,10 @@ import 'package:jamhubapp/auth/service.dart';
 import 'package:jamhubapp/models/auth.dart';
 import 'package:riverpod/riverpod.dart';
 
+class AccessTokenExpiredException implements Exception {}
+
+class RefreshTokenExpiredException implements Exception {}
+
 class AuthNotifier extends StateNotifier<AuthUser?> {
   AuthNotifier(this.ref) : super(null);
   StateNotifierProviderRef ref;
@@ -28,6 +32,10 @@ class AuthNotifier extends StateNotifier<AuthUser?> {
     } catch (e) {
       print(e);
     }
+  }
+
+  void updateAuthUser(AuthUser newUser) {
+    state = newUser;
   }
 }
 

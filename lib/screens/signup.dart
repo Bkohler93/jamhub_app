@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jamhubapp/auth/auth.dart';
-import 'package:jamhubapp/data/service.dart';
-import 'package:jamhubapp/data/providers/subscriptions.dart';
+import 'package:jamhubapp/data/jamhub.dart';
 import 'package:jamhubapp/models/user.dart';
-import 'package:jamhubapp/screens/home.dart';
 
 class SignupPage extends StatelessWidget {
   const SignupPage({super.key});

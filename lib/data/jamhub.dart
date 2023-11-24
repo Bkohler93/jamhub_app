@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:jamhubapp/auth/auth.dart';
 import 'package:jamhubapp/models/auth.dart';
 import 'package:jamhubapp/models/post.dart';
 import 'package:jamhubapp/models/room.dart';
@@ -26,6 +27,17 @@ class JamhubService {
         'Authorization': 'Bearer ${u.accessToken}',
       },
     );
+
+    if (res.statusCode == HttpStatus.badRequest ||
+        res.statusCode == HttpStatus.unauthorized) {
+      final jsonBody = jsonDecode(res.body);
+
+      if (jsonBody["error"] == "expired token") {
+        throw AccessTokenExpiredException();
+      }
+
+      throw Exception("Bad request");
+    }
 
     final List<dynamic> jsonList = jsonDecode(res.body);
 
@@ -64,6 +76,12 @@ class JamhubService {
 
       if (res.statusCode == HttpStatus.badRequest ||
           res.statusCode == HttpStatus.unauthorized) {
+        final jsonBody = jsonDecode(res.body);
+
+        if (jsonBody["error"] == "expired token") {
+          throw AccessTokenExpiredException();
+        }
+
         throw Exception("Bad request");
       }
 
@@ -131,6 +149,38 @@ class JamhubService {
       return posts;
     } catch (e) {
       rethrow;
+    }
+  }
+
+  Future<Post?> createPost(String link, UuidValue roomID, AuthUser u) async {
+    try {
+      final res = await http.post(Uri.parse("${baseUrl}posts"),
+          headers: <String, String>{
+            'Authorization': 'Bearer ${u.accessToken}',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode(<String, String>{
+            "room_id": roomID.toString(),
+            "link": link,
+          }));
+
+      if (res.statusCode == HttpStatus.badRequest ||
+          res.statusCode == HttpStatus.unauthorized) {
+        final jsonBody = jsonDecode(res.body);
+
+        if (jsonBody["error"] == "expired token") {
+          throw AccessTokenExpiredException();
+        }
+
+        throw Exception("Bad request");
+      }
+
+      final Post post = Post.fromJson(res.body);
+
+      return post;
+    } catch (e) {
+      print(e);
+      return null;
     }
   }
 }

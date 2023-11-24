@@ -1,5 +1,6 @@
 import 'package:jamhubapp/auth/auth.dart';
-import 'package:jamhubapp/data/service.dart';
+import 'package:jamhubapp/auth/service.dart';
+import 'package:jamhubapp/data/jamhub.dart';
 import 'package:jamhubapp/models/subscription.dart';
 import 'package:riverpod/riverpod.dart';
 
@@ -7,10 +8,15 @@ final userSubscriptionsProvider =
     FutureProvider<List<SubscriptionData>>((ref) async {
   final jamHubService = ref.watch(jamhubServiceProvider);
   final user = ref.watch(authNotifierProvider)!;
-
-  final userSubslist = await jamHubService.getUserSubscriptionList(user);
-
-  return userSubslist;
+  try {
+    return await jamHubService.getUserSubscriptionList(user);
+  } catch (e) {
+    if (e is AccessTokenExpiredException) {
+      await ref.read(authServiceProvider).refresh(user);
+      return await jamHubService.getUserSubscriptionList(user);
+    }
+    rethrow;
+  }
 });
 
 final topSubscribedRoomsProvider =
@@ -21,5 +27,3 @@ final topSubscribedRoomsProvider =
 
   return topRoomsList;
 });
-
-
