@@ -38,7 +38,7 @@ class SpotifyApiService {
         // Extract relevant information
         String songTitle = trackInfo['name'];
         String artistName = trackInfo['artists'][0]['name'];
-        String thumbnailUrl = trackInfo['album']['images'][0]['url'];
+        String thumbnailUrl = trackInfo['album']['images'][2]['url'];
 
         return SpotifyInfo(
           songTitle: songTitle,

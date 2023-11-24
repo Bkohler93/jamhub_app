@@ -28,7 +28,6 @@ class RoomPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     AsyncValue<List<Post>> posts = ref.watch(roomPostsProvider(roomID));
-    ref.read(spotifyTokenProvider);
     return Scaffold(
         appBar: AppBar(
           title: Text(roomName),
@@ -65,10 +64,44 @@ class RoomPage extends ConsumerWidget {
                             } else if (snapshot.hasError) {
                               return Text('Error: ${snapshot.error}');
                             } else if (snapshot.hasData) {
-                              return Column(
+                              return Row(
                                 children: [
-                                  Text(snapshot.data!.songTitle),
-                                  Text(snapshot.data!.artistName),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(
+                                              0.2), // Adjust the color and opacity
+                                          spreadRadius: 2,
+                                          blurRadius: 4,
+                                          offset: Offset(2,
+                                              2), // Adjust the position of the shadow
+                                        ),
+                                      ],
+                                    ),
+                                    child: Image.network(
+                                      snapshot.data!.thumbnailUrl,
+                                      // You can add more properties to customize the image display, such as width, height, fit, etc.
+                                      width: 64.0,
+                                      height: 64.0,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Text(snapshot.data!.songTitle,
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                            )),
+                                        Text(snapshot.data!.artistName),
+                                      ],
+                                    ),
+                                  ),
                                 ],
                               );
                               // return _buildSongData(snapshot.data!);
