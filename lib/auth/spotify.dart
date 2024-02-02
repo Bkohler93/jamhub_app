@@ -26,12 +26,11 @@ class SpotifyProvider extends ChangeNotifier {
       final response = await http.post(
         Uri.parse('https://accounts.spotify.com/api/token'),
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          // 'Content-Type': 'application/x-www-form-urlencoded',
           'Authorization': 'Basic $base64Encoded',
         },
         body: {'grant_type': 'client_credentials'},
       );
-
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
         _accessToken = data['access_token'];

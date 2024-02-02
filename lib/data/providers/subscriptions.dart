@@ -3,6 +3,7 @@ import 'package:jamhubapp/auth/service.dart';
 import 'package:jamhubapp/data/jamhub.dart';
 import 'package:jamhubapp/models/subscription.dart';
 import 'package:riverpod/riverpod.dart';
+import 'package:uuid/uuid_value.dart';
 
 final userSubscriptionsProvider =
     FutureProvider<List<SubscriptionData>>((ref) async {
@@ -27,3 +28,15 @@ final topSubscribedRoomsProvider =
 
   return topRoomsList;
 });
+
+final isUserSubscribedToRoomProvider = FutureProvider.family<bool, UuidValue>(
+  (ref, roomID) async {
+    final jamhubService = ref.watch(jamhubServiceProvider);
+    final user = ref.watch(authNotifierProvider);
+
+    final isSubscribed =
+        await jamhubService.checkIfUserSubscribedToRoom(user!, roomID);
+
+    return isSubscribed;
+  },
+);

@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jamhubapp/auth/auth.dart';
+import 'package:jamhubapp/data/providers/subscriptions.dart';
 import 'package:jamhubapp/models/auth.dart';
 import 'package:jamhubapp/models/post.dart';
 import 'package:jamhubapp/models/room.dart';
@@ -12,12 +14,94 @@ import 'package:http/http.dart' as http;
 import 'package:riverpod/riverpod.dart';
 import 'package:uuid/uuid_value.dart';
 
+class BadRequestJamhubException implements Exception {
+  BadRequestJamhubException(this.errorMsg);
+  final String errorMsg;
+}
+
+class NotFoundJamhubException implements Exception {
+  NotFoundJamhubException(this.errorMsg);
+  final String errorMsg;
+}
+
+class InternalServerErrorJamhubException implements Exception {
+  InternalServerErrorJamhubException(this.errorMsg);
+  final String errorMsg;
+}
+
 class JamhubService {
   JamhubService() {
     baseUrl = dotenv.get("BASE_URL");
   }
 
   late String baseUrl;
+
+  Future<bool> checkIfUserSubscribedToRoom(AuthUser u, UuidValue roomID) async {
+    final subData = await getUserSubscriptionList(u);
+
+    return subData.any((element) => element.roomID == roomID);
+  }
+
+  Future<void> unsubscribeFromRoom(AuthUser u, UuidValue roomID) async {
+    final res = await http.delete(
+      Uri.parse("${baseUrl}room_subs/$roomID"),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer ${u.accessToken}'
+      },
+    );
+
+    if (res.statusCode != HttpStatus.ok) {
+      final jsonBody = jsonDecode(res.body);
+      final err = jsonBody["error"];
+
+      switch (res.statusCode) {
+        case HttpStatus.badRequest:
+          throw BadRequestJamhubException(err);
+        case HttpStatus.internalServerError:
+          throw InternalServerErrorJamhubException(err);
+      }
+    } else {
+      print("unsubscibed to room");
+    }
+    // 400 bad request
+    // 500 internal server error
+  }
+
+  Future<void> subscribeToRoom(AuthUser u, UuidValue roomID) async {
+    final res = await http.post(
+      Uri.parse("${baseUrl}room_subs"),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer ${u.accessToken}',
+      },
+      body: jsonEncode(
+        <String, String>{
+          "room_id": roomID.uuid,
+        },
+      ),
+    );
+
+    if (res.statusCode != HttpStatus.created) {
+      final jsonBody = jsonDecode(res.body);
+      final err = jsonBody["error"];
+
+      switch (res.statusCode) {
+        case HttpStatus.badRequest:
+          print("bad request: " + err);
+          throw BadRequestJamhubException(err);
+
+        case HttpStatus.notFound:
+          print("no room exists: " + err);
+          throw NotFoundJamhubException(err);
+        case HttpStatus.internalServerError:
+          print("internal server error: " + err);
+          throw InternalServerErrorJamhubException(err);
+      }
+    } else {
+      print("subscribed to room!");
+    }
+  }
 
   Future<List<SubscriptionData>> getUserSubscriptionList(AuthUser u) async {
     final res = await http.get(
@@ -113,13 +197,13 @@ class JamhubService {
 
       if (res.statusCode != HttpStatus.created) {
         final body = jsonDecode(res.body);
-        throw Exception(body["error"]);
+        throw Exception("status code: ${res.statusCode}\t${body['error']}");
       }
 
       final User user = User.fromJson(res.body);
       return user;
     } catch (e) {
-      print(e);
+      print("error creating user: $e");
       return null;
     }
   }
