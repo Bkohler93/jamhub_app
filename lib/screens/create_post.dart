@@ -14,7 +14,7 @@ class CreatePostPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Create a post")),
+      appBar: AppBar(title: const Text("Create a post")),
       body: Center(
         child: CreatePostForm(
           roomID: roomID,
@@ -72,10 +72,10 @@ class CreatePostFormState extends ConsumerState<CreatePostForm> {
         children: <Widget>[
           TextFormField(
             controller: songLinkController,
-            decoration: InputDecoration(helperText: "paste link here"),
+            decoration: const InputDecoration(helperText: "paste link here"),
           ),
           ElevatedButton(
-              onPressed: pressCreateHandler(user!), child: Text("Create Post"))
+              onPressed: pressCreateHandler(user!), child: const Text("Create Post"))
           // Add TextFormFields and ElevatedButton here.
         ],
       ),

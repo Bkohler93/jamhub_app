@@ -78,7 +78,7 @@ class HomePageState extends ConsumerState {
                         ),
                         child: Center(
                           child: Text(
-                            subList[i].roomName!,
+                            subList[i].roomName,
                             style: const TextStyle(
                                 color: Colors.white), // Text color
                           ),
@@ -90,10 +90,10 @@ class HomePageState extends ConsumerState {
                 (n) => SizedBox(
                     height: 5.0.h,
                     width: 20.0.h,
-                    child: Text("You aren't subscribed to any rooms yet!"))),
+                    child: const Text("You aren't subscribed to any rooms yet!"))),
             loading: () => List.generate(
                 3,
-                (n) => Container(
+                (n) => SizedBox(
                     height: 5.0.h,
                     width: 20.0.h,
                     child: const CircularProgressIndicator()))),

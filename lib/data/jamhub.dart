@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jamhubapp/auth/auth.dart';
-import 'package:jamhubapp/data/providers/subscriptions.dart';
 import 'package:jamhubapp/models/auth.dart';
 import 'package:jamhubapp/models/post.dart';
+import 'package:jamhubapp/models/post_vote.dart';
 import 'package:jamhubapp/models/room.dart';
 import 'package:jamhubapp/models/subscription.dart';
 import 'package:jamhubapp/models/user.dart';
@@ -36,6 +36,65 @@ class JamhubService {
 
   late String baseUrl;
 
+  Future<void> createPostVote(AuthUser user, UuidValue postID,
+      {required bool isUpvote}) async {
+    final res = await http.post(Uri.parse("${baseUrl}post_votes"),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer ${user.accessToken}'
+        },
+        body: jsonEncode(<String, dynamic>{
+          "post_id": postID.uuid,
+          "is_upvote": isUpvote,
+        }));
+
+    if (res.statusCode != HttpStatus.ok) {
+      final jsonBody = jsonDecode(res.body);
+      final err = jsonBody["error"];
+
+      switch (res.statusCode) {
+        case HttpStatus.badRequest:
+          throw BadRequestJamhubException(err);
+        case HttpStatus.notFound:
+          throw NotFoundJamhubException(err);
+        case HttpStatus.internalServerError:
+          throw InternalServerErrorJamhubException(err);
+      }
+    } else {
+      print("upvoted post $postID");
+    }
+  }
+
+  Future<List<PostVote>> getPostPostVotes(UuidValue postID) async {
+    final res = await http.get(
+        Uri.parse("${baseUrl}posts/${postID}/post_votes"),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8'
+        });
+
+    if (res.statusCode != HttpStatus.ok) {
+      final jsonBody = jsonDecode(res.body);
+      final err = jsonBody["error"];
+
+      switch (res.statusCode) {
+        case HttpStatus.badRequest:
+          throw BadRequestJamhubException(err);
+        case HttpStatus.internalServerError:
+          throw InternalServerErrorJamhubException(err);
+        default:
+          throw Exception("Unknown error has occured: $err");
+      }
+    } else {
+      final List<dynamic> jsonList = jsonDecode(res.body);
+
+      List<PostVote> postVotes =
+          jsonList.map((json) => PostVote.fromMap(json)).toList();
+
+      return postVotes;
+    }
+  }
+
+  /// checks if user is subscribed to room with matching roomID
   Future<bool> checkIfUserSubscribedToRoom(AuthUser u, UuidValue roomID) async {
     final subData = await getUserSubscriptionList(u);
 

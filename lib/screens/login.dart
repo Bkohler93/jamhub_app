@@ -73,10 +73,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           onPressed: () {
                             Navigator.of(context).push(MaterialPageRoute(
                                 builder: (BuildContext context) {
-                              return SignupPage();
+                              return const SignupPage();
                             }));
                           },
-                          child: Text("Sign up here"))
+                          child: const Text("Sign up here"))
                     ],
                   )
                 : const Text("Logging in!"),

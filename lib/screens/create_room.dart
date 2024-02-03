@@ -12,8 +12,8 @@ class CreateRoomPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text("Create a room")),
-        body: Center(child: CreateRoomForm()));
+        appBar: AppBar(title: const Text("Create a room")),
+        body: const Center(child: CreateRoomForm()));
   }
 }
 
@@ -64,10 +64,10 @@ class CreateRoomFormState extends ConsumerState<CreateRoomForm> {
         children: <Widget>[
           TextFormField(
             controller: roomNameController,
-            decoration: InputDecoration(helperText: "room name"),
+            decoration: const InputDecoration(helperText: "room name"),
           ),
           ElevatedButton(
-              onPressed: pressCreateHandler(user!), child: Text("Create room"))
+              onPressed: pressCreateHandler(user!), child: const Text("Create room"))
           // Add TextFormFields and ElevatedButton here.
         ],
       ),

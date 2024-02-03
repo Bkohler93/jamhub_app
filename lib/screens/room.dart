@@ -7,7 +7,9 @@ import 'package:jamhubapp/data/jamhub.dart';
 import 'package:jamhubapp/data/providers/posts.dart';
 import 'package:jamhubapp/data/providers/subscriptions.dart';
 import 'package:jamhubapp/data/spotify.dart';
+import 'package:jamhubapp/models/auth.dart';
 import 'package:jamhubapp/models/post.dart';
+import 'package:jamhubapp/models/post_vote.dart';
 import 'package:jamhubapp/screens/create_post.dart';
 import 'package:uuid/uuid.dart';
 
@@ -44,6 +46,26 @@ class RoomPageState extends ConsumerState<RoomPage> {
     roomName = widget.roomName;
   }
 
+  void handleUserUpvote(AuthUser user, UuidValue postID) async {
+    // create post vote
+    await ref
+        .read(jamhubServiceProvider)
+        .createPostVote(user, postID, isUpvote: true);
+
+    // invalidate
+    ref.invalidate(postVotesProvider(postID));
+  }
+
+  void handleUserDownvote(AuthUser user, UuidValue postID) async {
+    // create post vote
+    await ref
+        .read(jamhubServiceProvider)
+        .createPostVote(user, postID, isUpvote: false);
+
+    // invalidate
+    ref.invalidate(postVotesProvider(postID));
+  }
+
   @override
   Widget build(BuildContext context) {
     AsyncValue<List<Post>> posts = ref.watch(roomPostsProvider(roomID));
@@ -66,7 +88,7 @@ class RoomPageState extends ConsumerState<RoomPage> {
                       ref.invalidate(userSubscriptionsProvider);
                     } catch (e) {}
                   },
-                  child: Text("Unsubscribe"),
+                  child: const Text("Unsubscribe"),
                 );
               } else {
                 return TextButton(
@@ -82,17 +104,17 @@ class RoomPageState extends ConsumerState<RoomPage> {
                       print(e);
                     }
                   },
-                  child: Text("Subscribe"),
+                  child: const Text("Subscribe"),
                 );
               }
             }, error: (e, s) {
               print(e);
-              return TextButton(
-                child: Text("error"),
+              return const TextButton(
                 onPressed: null,
+                child: Text("error"),
               );
             }, loading: () {
-              return TextButton(child: Text("loading"), onPressed: null);
+              return const TextButton(onPressed: null, child: Text("loading"));
             })
           ],
         ),
@@ -113,8 +135,7 @@ class RoomPageState extends ConsumerState<RoomPage> {
               return Column(
                 children: List.generate(
                   posts.length,
-                  (i) => Container(
-                      height: 10.h,
+                  (i) => SizedBox(
                       width: 80.w,
                       child: FutureBuilder(
                           future: SpotifyApiService.getTrackInfo(
@@ -124,12 +145,72 @@ class RoomPageState extends ConsumerState<RoomPage> {
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
-                              return CircularProgressIndicator();
+                              return const CircularProgressIndicator();
                             } else if (snapshot.hasError) {
                               return Text('Error: ${snapshot.error}');
                             } else if (snapshot.hasData) {
+                              final AsyncValue<List<PostVote>> roomVotes =
+                                  ref.watch(postVotesProvider(posts[i].id));
+
                               return Row(
                                 children: [
+                                  roomVotes.when(data: (roomVotes) {
+                                    final userUpvoted = roomVotes.any(
+                                        (element) =>
+                                            element.userID == user!.id &&
+                                            element.isUp);
+                                    final userDownvoted = roomVotes.any(
+                                        (element) =>
+                                            element.userID == user!.id &&
+                                            !element.isUp);
+
+                                    final postScore = roomVotes.fold<int>(0,
+                                        (previousValue, element) {
+                                      if (element.isUp) {
+                                        return previousValue + 1;
+                                      } else {
+                                        return previousValue - 1;
+                                      }
+                                    });
+                                    return Container(
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          IconButton(
+                                              iconSize: 22.0,
+                                              onPressed: userUpvoted
+                                                  ? null
+                                                  : () => handleUserUpvote(
+                                                      user!, posts[i].id),
+                                              icon: Icon(
+                                                Icons.arrow_upward,
+                                                color: userUpvoted
+                                                    ? Colors.orange
+                                                    : Colors.grey,
+                                              )),
+                                          // Text("$postScore"),
+                                          Text("$postScore",
+                                              style: TextStyle(fontSize: 12)),
+                                          IconButton(
+                                              iconSize: 22.0,
+                                              onPressed: userDownvoted
+                                                  ? null
+                                                  : () => handleUserDownvote(
+                                                      user!, posts[i].id),
+                                              icon: Icon(Icons.arrow_downward,
+                                                  color: userDownvoted
+                                                      ? Colors.blue
+                                                      : Colors.grey)),
+                                        ],
+                                      ),
+                                    );
+                                  }, error: (e, s) {
+                                    return Text("error");
+                                  }, loading: () {
+                                    return CircularProgressIndicator();
+                                  }),
                                   Container(
                                     decoration: BoxDecoration(
                                       boxShadow: [
@@ -138,7 +219,7 @@ class RoomPageState extends ConsumerState<RoomPage> {
                                               0.2), // Adjust the color and opacity
                                           spreadRadius: 2,
                                           blurRadius: 4,
-                                          offset: Offset(2,
+                                          offset: const Offset(2,
                                               2), // Adjust the position of the shadow
                                         ),
                                       ],
@@ -159,7 +240,7 @@ class RoomPageState extends ConsumerState<RoomPage> {
                                           CrossAxisAlignment.center,
                                       children: [
                                         Text(snapshot.data!.songTitle,
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                               fontSize: 18,
                                             )),
                                         Text(snapshot.data!.artistName),
@@ -170,7 +251,7 @@ class RoomPageState extends ConsumerState<RoomPage> {
                               );
                               // return _buildSongData(snapshot.data!);
                             } else {
-                              return Text('Something went wrong');
+                              return const Text('Something went wrong');
                             }
                           })
 

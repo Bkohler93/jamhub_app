@@ -9,10 +9,10 @@ class SignupPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Signup")),
-      body: Center(
+      appBar: AppBar(title: const Text("Signup")),
+      body: const Center(
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: EdgeInsets.all(8.0),
           child: Column(
             children: [
               Text("Requires email or phone number to create an account"),
@@ -79,23 +79,23 @@ class SignupFormState extends ConsumerState<SignupForm> {
       child: Column(
         children: <Widget>[
           TextFormField(
-            decoration: InputDecoration(helperText: "email"),
+            decoration: const InputDecoration(helperText: "email"),
             controller: emailController,
           ),
           TextFormField(
-            decoration: InputDecoration(helperText: "password"),
+            decoration: const InputDecoration(helperText: "password"),
             controller: passwordController,
           ),
           TextFormField(
-            decoration: InputDecoration(helperText: "display name"),
+            decoration: const InputDecoration(helperText: "display name"),
             controller: displayNameController,
           ),
           TextFormField(
-            decoration: InputDecoration(helperText: "phone number"),
+            decoration: const InputDecoration(helperText: "phone number"),
             controller: phoneController,
           ),
 
-          ElevatedButton(onPressed: pressCreateHandler(), child: Text("Done"))
+          ElevatedButton(onPressed: pressCreateHandler(), child: const Text("Done"))
           // Add TextFormFields and ElevatedButton here.
         ],
       ),
