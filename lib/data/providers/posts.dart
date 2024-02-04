@@ -15,7 +15,7 @@ final roomPostsProvider =
 
 final postVotesProvider = FutureProvider.family<List<PostVote>, UuidValue>(
   (ref, roomID) async {
-    final jamhubService = await ref.watch(jamhubServiceProvider);
+    final jamhubService = ref.watch(jamhubServiceProvider);
 
     final postVotes = await jamhubService.getPostPostVotes(roomID);
 

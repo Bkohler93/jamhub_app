@@ -40,9 +40,9 @@ class CreatePostFormState extends ConsumerState<CreatePostForm> {
   AuthUser? user;
 
   void Function() pressCreateHandler(AuthUser u) {
-    return () {
+    return () async {
       try {
-        ref
+        await ref
             .read(jamhubServiceProvider)
             .createPost(songLinkController.text, widget.roomID, u);
       } catch (e) {
@@ -75,7 +75,8 @@ class CreatePostFormState extends ConsumerState<CreatePostForm> {
             decoration: const InputDecoration(helperText: "paste link here"),
           ),
           ElevatedButton(
-              onPressed: pressCreateHandler(user!), child: const Text("Create Post"))
+              onPressed: pressCreateHandler(user!),
+              child: const Text("Create Post"))
           // Add TextFormFields and ElevatedButton here.
         ],
       ),
