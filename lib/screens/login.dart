@@ -14,21 +14,20 @@ class LoginPage extends ConsumerStatefulWidget {
 class _LoginPageState extends ConsumerState<LoginPage> {
   late TextEditingController loginController;
   late TextEditingController passwordController;
+  late GlobalKey<FormState> formKey;
+  bool showPasswordError = false;
 
   void signIn() async {
-    if (loginController.text.isEmpty || passwordController.text.isEmpty) {
-      print("must provide login credential");
-      return;
-    }
+    if (formKey.currentState!.validate()) {
+      final loginResult = await ref
+          .read(authNotifierProvider.notifier)
+          .login(loginController.text, passwordController.text);
 
-    final loginResult = await ref
-        .read(authNotifierProvider.notifier)
-        .login(loginController.text, passwordController.text);
-
-    if (loginResult != null) {
-      navigateTo(() => const HomePage());
-    } else {
-      print("Login Failed!");
+      if (loginResult != null) {
+        navigateTo(() => const HomePage());
+      } else {
+        print("Login Failed!");
+      }
     }
   }
 
@@ -42,6 +41,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final user = ref.watch(authNotifierProvider);
     loginController = TextEditingController();
     passwordController = TextEditingController();
+    formKey = GlobalKey<FormState>();
 
     return Scaffold(
       appBar: AppBar(title: const Text("JamHub")),
@@ -50,34 +50,50 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: user == null
-                ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      TextField(
-                        controller: loginController,
-                        decoration: const InputDecoration(
-                            hintText: "Use your email or phone number",
-                            helperText: "Login"),
-                      ),
-                      TextField(
-                          obscureText: true,
-                          controller: passwordController,
-                          decoration: const InputDecoration(
-                              helperText: "Password",
-                              hintText: "Enter password here")),
-                      ElevatedButton(
-                        onPressed: signIn,
-                        child: const Text("Sign in"),
-                      ),
-                      TextButton(
-                          onPressed: () {
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (BuildContext context) {
-                              return const SignupPage();
-                            }));
+                ? Form(
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    key: formKey,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TextFormField(
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Please enter an email or phone number.";
+                            }
+                            return null;
                           },
-                          child: const Text("Sign up here"))
-                    ],
+                          controller: loginController,
+                          decoration: InputDecoration(
+                              hintText: "Use your email or phone number",
+                              helperText: "Login"),
+                        ),
+                        TextFormField(
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Please enter a password.";
+                              }
+                              return null;
+                            },
+                            obscureText: true,
+                            controller: passwordController,
+                            decoration: InputDecoration(
+                                helperText: "Password",
+                                hintText: "Enter password here")),
+                        ElevatedButton(
+                          onPressed: signIn,
+                          child: const Text("Sign in"),
+                        ),
+                        TextButton(
+                            onPressed: () {
+                              Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (BuildContext context) {
+                                return const SignupPage();
+                              }));
+                            },
+                            child: const Text("Sign up here"))
+                      ],
+                    ),
                   )
                 : const Text("Logging in!"),
           ),
