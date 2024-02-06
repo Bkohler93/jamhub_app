@@ -42,32 +42,58 @@ class SignupForm extends ConsumerStatefulWidget {
 // }
 
 class SignupFormState extends ConsumerState<SignupForm> {
-  final _formKey = GlobalKey<FormState>();
-  TextEditingController emailController = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+  TextEditingController emailPhoneController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController displayNameController = TextEditingController();
-  TextEditingController phoneController = TextEditingController();
 
   User? user;
 
-  void Function() pressCreateHandler() {
-    return () {
-      final user = ref.read(jamhubServiceProvider).createUser(
-            email: emailController.text,
+  bool validateEmail(String value) {
+    String pattern =
+        r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+    RegExp regex = RegExp(pattern);
+    if (!regex.hasMatch(value)) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  bool validatePhone(String value) {
+    if (value.length != 10) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  void pressCreateHandler() async {
+    if (formKey.currentState!.validate()) {
+      String email = "";
+      String phone = "";
+      if (validateEmail(emailPhoneController.text)) {
+        email = emailPhoneController.text;
+      } else {
+        phone = emailPhoneController.text;
+      }
+      final user = await ref.read(jamhubServiceProvider).createUser(
+            email: email,
             password: passwordController.text,
-            phone: phoneController.text,
+            phone: phone,
             displayName: displayNameController.text,
           );
-      user.then(
-        (u) {
-          if (u != null) {
-            Navigator.of(context).pop();
-          } else {
-            print("error creating user");
-          }
-        },
-      );
-    };
+
+      if (user != null) {
+        Navigator.of(context).pop();
+      } else {
+        print("Signup failed!");
+      }
+    }
+  }
+
+  bool fieldEmpty(String? value) {
+    return value == null || value.isEmpty;
   }
 
   @override
@@ -75,27 +101,38 @@ class SignupFormState extends ConsumerState<SignupForm> {
     // user = ref.watch(authNotifierProvider);
     // Build a Form widget using the _formKey created above.
     return Form(
-      key: _formKey,
+      autovalidateMode: AutovalidateMode.always,
+      key: formKey,
       child: Column(
         children: <Widget>[
           TextFormField(
-            decoration: const InputDecoration(helperText: "email"),
-            controller: emailController,
+            validator: (value) {
+              if (value == null) {
+                return "Requires an email or phone number.";
+              }
+              bool isEmail = validateEmail(value);
+              bool isPhone = validatePhone(value);
+              if (!isEmail && !isPhone) {
+                return "You have entered an invalid email or phone number.";
+              }
+              return null;
+            },
+            decoration:
+                const InputDecoration(helperText: "email or phone number"),
+            controller: emailPhoneController,
           ),
           TextFormField(
             decoration: const InputDecoration(helperText: "password"),
             controller: passwordController,
+            obscureText: true,
           ),
           TextFormField(
             decoration: const InputDecoration(helperText: "display name"),
             controller: displayNameController,
           ),
-          TextFormField(
-            decoration: const InputDecoration(helperText: "phone number"),
-            controller: phoneController,
-          ),
 
-          ElevatedButton(onPressed: pressCreateHandler(), child: const Text("Done"))
+          ElevatedButton(
+              onPressed: pressCreateHandler, child: const Text("Done"))
           // Add TextFormFields and ElevatedButton here.
         ],
       ),
