@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jamhubapp/auth/auth.dart';
+import 'package:jamhubapp/data/providers/auth.dart';
 import 'package:jamhubapp/screens/home.dart';
 import 'package:jamhubapp/screens/signup.dart';
 

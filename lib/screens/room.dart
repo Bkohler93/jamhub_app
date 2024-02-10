@@ -1,16 +1,21 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_sizer/flutter_sizer.dart';
-import 'package:jamhubapp/auth/auth.dart';
+import 'package:jamhubapp/data/providers/auth.dart';
 import 'package:jamhubapp/auth/spotify.dart';
 import 'package:jamhubapp/data/jamhub.dart';
 import 'package:jamhubapp/data/providers/posts.dart';
 import 'package:jamhubapp/data/providers/subscriptions.dart';
 import 'package:jamhubapp/data/spotify.dart';
+import 'package:jamhubapp/injection_container.dart';
 import 'package:jamhubapp/models/auth.dart';
 import 'package:jamhubapp/models/post.dart';
 import 'package:jamhubapp/models/post_vote.dart';
 import 'package:jamhubapp/screens/create_post.dart';
+import 'package:jamhubapp/screens/post.dart';
+import 'package:jamhubapp/widgets/vote.dart';
 import 'package:uuid/uuid.dart';
 
 class RoomPage extends ConsumerStatefulWidget {
@@ -39,6 +44,15 @@ class RoomPageState extends ConsumerState<RoomPage> {
     };
   }
 
+  void Function() handleGoToPostPage(
+      BuildContext context, UuidValue postID, String postLink) {
+    return () {
+      Navigator.of(context).push(MaterialPageRoute(
+          builder: (BuildContext context) =>
+              PostPage(postID: postID, postLink: postLink)));
+    };
+  }
+
   @override
   void initState() {
     super.initState();
@@ -46,28 +60,9 @@ class RoomPageState extends ConsumerState<RoomPage> {
     roomName = widget.roomName;
   }
 
-  void handleUserUpvote(AuthUser user, UuidValue postID) async {
-    // create post vote
-    await ref
-        .read(jamhubServiceProvider)
-        .createPostVote(user, postID, isUpvote: true);
-
-    // invalidate
-    ref.invalidate(postVotesProvider(postID));
-  }
-
-  void handleUserDownvote(AuthUser user, UuidValue postID) async {
-    // create post vote
-    await ref
-        .read(jamhubServiceProvider)
-        .createPostVote(user, postID, isUpvote: false);
-
-    // invalidate
-    ref.invalidate(postVotesProvider(postID));
-  }
-
   @override
   Widget build(BuildContext context) {
+    print("building room page....");
     AsyncValue<List<Post>> posts = ref.watch(roomPostsProvider(roomID));
     AsyncValue<bool> isSubscribed =
         ref.watch(isUserSubscribedToRoomProvider(roomID));
@@ -81,8 +76,7 @@ class RoomPageState extends ConsumerState<RoomPage> {
                 return TextButton(
                   onPressed: () async {
                     try {
-                      await ref
-                          .read(jamhubServiceProvider)
+                      await locator<JamhubService>()
                           .unsubscribeFromRoom(user!, roomID);
                       ref.invalidate(isUserSubscribedToRoomProvider(roomID));
                       ref.invalidate(userSubscriptionsProvider);
@@ -95,8 +89,7 @@ class RoomPageState extends ConsumerState<RoomPage> {
                   onPressed: () async {
                     //subscribe
                     try {
-                      await ref
-                          .read(jamhubServiceProvider)
+                      await locator<JamhubService>()
                           .subscribeToRoom(user!, roomID);
                       ref.invalidate(isUserSubscribedToRoomProvider(roomID));
                       ref.invalidate(userSubscriptionsProvider);
@@ -125,7 +118,7 @@ class RoomPageState extends ConsumerState<RoomPage> {
         ),
         body: Center(
           child: posts.when(
-            loading: () => const CircularProgressIndicator(),
+            loading: () => Text("Loading posts"),
             error: (e, stackTrace) =>
                 Text("error retrieving room's posts - ${e.toString()}"),
             data: (posts) {
@@ -138,14 +131,14 @@ class RoomPageState extends ConsumerState<RoomPage> {
                   (i) => SizedBox(
                       width: 80.w,
                       child: FutureBuilder(
-                          future: SpotifyApiService.getTrackInfo(
+                          future: locator<SpotifyApiService>().getTrackInfo(
                             posts[i].link,
-                            ref.read(spotifyTokenProvider).accessToken,
+                            locator<SpotifyAuth>().accessToken,
                           ),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
-                              return const CircularProgressIndicator();
+                              return const Text("Loading track infos");
                             } else if (snapshot.hasError) {
                               return Text('Error: ${snapshot.error}');
                             } else if (snapshot.hasData) {
@@ -154,97 +147,49 @@ class RoomPageState extends ConsumerState<RoomPage> {
 
                               return Row(
                                 children: [
-                                  roomVotes.when(data: (roomVotes) {
-                                    final userUpvoted = roomVotes.any(
-                                        (element) =>
-                                            element.userID == user!.id &&
-                                            element.isUp);
-                                    final userDownvoted = roomVotes.any(
-                                        (element) =>
-                                            element.userID == user!.id &&
-                                            !element.isUp);
-
-                                    final postScore = roomVotes.fold<int>(0,
-                                        (previousValue, element) {
-                                      if (element.isUp) {
-                                        return previousValue + 1;
-                                      } else {
-                                        return previousValue - 1;
-                                      }
-                                    });
-                                    return Container(
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          IconButton(
-                                              iconSize: 22.0,
-                                              onPressed: userUpvoted
-                                                  ? null
-                                                  : () => handleUserUpvote(
-                                                      user!, posts[i].id),
-                                              icon: Icon(
-                                                Icons.arrow_upward,
-                                                color: userUpvoted
-                                                    ? Colors.orange
-                                                    : Colors.grey,
-                                              )),
-                                          // Text("$postScore"),
-                                          Text("$postScore",
-                                              style: TextStyle(fontSize: 12)),
-                                          IconButton(
-                                              iconSize: 22.0,
-                                              onPressed: userDownvoted
-                                                  ? null
-                                                  : () => handleUserDownvote(
-                                                      user!, posts[i].id),
-                                              icon: Icon(Icons.arrow_downward,
-                                                  color: userDownvoted
-                                                      ? Colors.blue
-                                                      : Colors.grey)),
+                                  VoteWidget(postID: posts[i].id),
+                                  GestureDetector(
+                                    onTap: handleGoToPostPage(
+                                        context, posts[i].id, posts[i].link),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(
+                                                0.2), // Adjust the color and opacity
+                                            spreadRadius: 2,
+                                            blurRadius: 4,
+                                            offset: const Offset(2,
+                                                2), // Adjust the position of the shadow
+                                          ),
                                         ],
                                       ),
-                                    );
-                                  }, error: (e, s) {
-                                    return Text("error");
-                                  }, loading: () {
-                                    return CircularProgressIndicator();
-                                  }),
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(
-                                              0.2), // Adjust the color and opacity
-                                          spreadRadius: 2,
-                                          blurRadius: 4,
-                                          offset: const Offset(2,
-                                              2), // Adjust the position of the shadow
-                                        ),
-                                      ],
-                                    ),
-                                    child: Image.network(
-                                      snapshot.data!.thumbnailUrl,
-                                      // You can add more properties to customize the image display, such as width, height, fit, etc.
-                                      width: 64.0,
-                                      height: 64.0,
-                                      fit: BoxFit.cover,
+                                      child: Image.network(
+                                        snapshot.data!.thumbnailUrl,
+                                        // You can add more properties to customize the image display, such as width, height, fit, etc.
+                                        width: 64.0,
+                                        height: 64.0,
+                                        fit: BoxFit.cover,
+                                      ),
                                     ),
                                   ),
                                   Expanded(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Text(snapshot.data!.songTitle,
-                                            style: const TextStyle(
-                                              fontSize: 18,
-                                            )),
-                                        Text(snapshot.data!.artistName),
-                                      ],
+                                    child: GestureDetector(
+                                      onTap: handleGoToPostPage(
+                                          context, posts[i].id, posts[i].link),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Text(snapshot.data!.songTitle,
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                              )),
+                                          Text(snapshot.data!.artistName),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ],

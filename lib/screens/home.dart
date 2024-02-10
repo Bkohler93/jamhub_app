@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jamhubapp/auth/auth.dart';
+import 'package:jamhubapp/data/providers/auth.dart';
 import 'package:jamhubapp/data/providers/subscriptions.dart';
 import 'package:jamhubapp/models/subscription.dart';
 import 'package:flutter_sizer/flutter_sizer.dart';
@@ -90,7 +90,8 @@ class HomePageState extends ConsumerState {
                 (n) => SizedBox(
                     height: 5.0.h,
                     width: 20.0.h,
-                    child: const Text("You aren't subscribed to any rooms yet!"))),
+                    child:
+                        const Text("You aren't subscribed to any rooms yet!"))),
             loading: () => List.generate(
                 3,
                 (n) => SizedBox(

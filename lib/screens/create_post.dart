@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jamhubapp/auth/auth.dart';
-import 'package:jamhubapp/auth/service.dart';
-import 'package:jamhubapp/data/providers/posts.dart';
-import 'package:jamhubapp/models/auth.dart';
 import 'package:jamhubapp/data/jamhub.dart';
+import 'package:jamhubapp/data/providers/auth.dart';
+import 'package:jamhubapp/auth/jamhub_auth.dart';
+import 'package:jamhubapp/data/providers/posts.dart';
+import 'package:jamhubapp/injection_container.dart';
+import 'package:jamhubapp/models/auth.dart';
 import 'package:uuid/uuid_value.dart';
 
 class CreatePostPage extends StatelessWidget {
@@ -42,21 +43,18 @@ class CreatePostFormState extends ConsumerState<CreatePostForm> {
   void Function() pressCreateHandler(AuthUser u) {
     return () async {
       try {
-        await ref
-            .read(jamhubServiceProvider)
+        await locator<JamhubService>()
             .createPost(songLinkController.text, widget.roomID, u);
       } catch (e) {
         if (e is AccessTokenExpiredException) {
-          ref.read(authServiceProvider).refresh(u).then((updatedUser) {
-            ref.read(authNotifierProvider.notifier).updateAuthUser(updatedUser);
-          });
-          ref
-              .read(jamhubServiceProvider)
-              .createPost(songLinkController.text, widget.roomID, u);
+          final updatedUser =
+              await ref.read(authNotifierProvider.notifier).refreshUserAuth();
+
+          locator<JamhubService>()
+              .createPost(songLinkController.text, widget.roomID, updatedUser);
         }
         rethrow;
       }
-
       ref.invalidate(roomPostsProvider);
       Navigator.of(context).pop();
     };

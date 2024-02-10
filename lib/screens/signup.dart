@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jamhubapp/data/jamhub.dart';
+import 'package:jamhubapp/injection_container.dart';
 import 'package:jamhubapp/models/user.dart';
 
 class SignupPage extends StatelessWidget {
@@ -77,12 +78,12 @@ class SignupFormState extends ConsumerState<SignupForm> {
       } else {
         phone = emailPhoneController.text;
       }
-      final user = await ref.read(jamhubServiceProvider).createUser(
-            email: email,
-            password: passwordController.text,
-            phone: phone,
-            displayName: displayNameController.text,
-          );
+      final user = await locator<JamhubService>().createUser(
+        email: email,
+        password: passwordController.text,
+        phone: phone,
+        displayName: displayNameController.text,
+      );
 
       if (user != null) {
         Navigator.of(context).pop();

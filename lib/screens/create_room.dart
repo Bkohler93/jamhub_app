@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jamhubapp/auth/auth.dart';
-import 'package:jamhubapp/auth/service.dart';
+import 'package:jamhubapp/data/providers/auth.dart';
+import 'package:jamhubapp/auth/jamhub_auth.dart';
+import 'package:jamhubapp/injection_container.dart';
 import 'package:jamhubapp/models/auth.dart';
 import 'package:jamhubapp/data/jamhub.dart';
 import 'package:jamhubapp/data/providers/subscriptions.dart';
@@ -34,17 +35,13 @@ class CreateRoomFormState extends ConsumerState<CreateRoomForm> {
   void Function() pressCreateHandler(AuthUser u) {
     return () async {
       try {
-        await ref
-            .read(jamhubServiceProvider)
-            .createRoom(roomNameController.text, u);
+        await locator<JamhubService>().createRoom(roomNameController.text, u);
       } catch (e) {
         if (e is AccessTokenExpiredException) {
-          final updatedUser = await ref.read(authServiceProvider).refresh(u);
+          final updatedUser = await locator<AuthService>().refresh(u);
           ref.read(authNotifierProvider.notifier).updateAuthUser(updatedUser);
 
-          await ref
-              .read(jamhubServiceProvider)
-              .createRoom(roomNameController.text, u);
+          await locator<JamhubService>().createRoom(roomNameController.text, u);
         }
       }
 
@@ -67,7 +64,8 @@ class CreateRoomFormState extends ConsumerState<CreateRoomForm> {
             decoration: const InputDecoration(helperText: "room name"),
           ),
           ElevatedButton(
-              onPressed: pressCreateHandler(user!), child: const Text("Create room"))
+              onPressed: pressCreateHandler(user!),
+              child: const Text("Create room"))
           // Add TextFormFields and ElevatedButton here.
         ],
       ),

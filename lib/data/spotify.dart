@@ -13,7 +13,7 @@ class SpotifyInfo {
 }
 
 class SpotifyApiService {
-  static Future<SpotifyInfo?> getTrackInfo(
+  Future<SpotifyInfo?> getTrackInfo(
       String spotifyUrl, String spotifyToken) async {
     try {
       // Extract the track ID from the Spotify URL

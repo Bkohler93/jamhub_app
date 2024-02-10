@@ -1,4 +1,4 @@
-import 'package:jamhubapp/auth/service.dart';
+import 'package:jamhubapp/auth/jamhub_auth.dart';
 import 'package:test/test.dart';
 
 void main() {

@@ -1,17 +1,13 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-final spotifyTokenProvider = ChangeNotifierProvider((ref) => SpotifyProvider());
-
-class SpotifyProvider extends ChangeNotifier {
+class SpotifyAuth {
   late String _accessToken;
 
   String get accessToken => _accessToken;
 
-  SpotifyProvider() {
+  SpotifyAuth() {
     // Initialize the provider by fetching the access token
     _fetchAccessToken();
   }
@@ -34,13 +30,12 @@ class SpotifyProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
         _accessToken = data['access_token'];
-        notifyListeners(); // Notify listeners that the accessToken has been updated
       } else {
         throw Exception('Failed to get Spotify access token');
       }
     } catch (e) {
       // Handle exceptions
-      print('Exception: $e');
+      print('Error while fetching access token: $e');
     }
   }
 }

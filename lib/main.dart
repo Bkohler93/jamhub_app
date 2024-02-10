@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_sizer/flutter_sizer.dart';
-import 'package:jamhubapp/auth/spotify.dart';
+import 'package:jamhubapp/injection_container.dart';
 import 'package:jamhubapp/screens/login.dart';
 
 void main() async {
   await dotenv.load(fileName: ".env");
+  setupLocator();
   runApp(
     const ProviderScope(child: MyApp()),
   );
@@ -44,7 +45,6 @@ class _EagerInitialization extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Eagerly initialize providers by watching them.
     // By using "watch", the provider will stay alive and not be disposed.
-    ref.watch(spotifyTokenProvider);
     return child;
   }
 }

@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:jamhubapp/models/auth.dart';
-import 'package:riverpod/riverpod.dart';
 
 class AuthService {
   AuthService() {
@@ -47,5 +46,3 @@ class AuthService {
 
   Future<void> logout() async {}
 }
-
-final authServiceProvider = Provider<AuthService>((ref) => AuthService());

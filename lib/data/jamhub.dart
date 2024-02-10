@@ -2,8 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jamhubapp/auth/auth.dart';
+import 'package:jamhubapp/data/providers/auth.dart';
 import 'package:jamhubapp/models/auth.dart';
 import 'package:jamhubapp/models/post.dart';
 import 'package:jamhubapp/models/post_vote.dart';
@@ -11,7 +10,6 @@ import 'package:jamhubapp/models/room.dart';
 import 'package:jamhubapp/models/subscription.dart';
 import 'package:jamhubapp/models/user.dart';
 import 'package:http/http.dart' as http;
-import 'package:riverpod/riverpod.dart';
 import 'package:uuid/uuid_value.dart';
 
 class BadRequestJamhubException implements Exception {
@@ -327,5 +325,3 @@ class JamhubService {
     }
   }
 }
-
-final jamhubServiceProvider = Provider<JamhubService>((ref) => JamhubService());
